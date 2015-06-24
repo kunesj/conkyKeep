@@ -21,7 +21,7 @@ conf_path = os.path.join(path, '..', conf_file)
 line_height = 16
 line_height_title = 18
 
-def getColorPath(color): # TODO - rest of colors
+def getColorPath(color):
     """
     Returns:
         pathToBackgroundImage
@@ -37,6 +37,10 @@ def getColorPath(color): # TODO - rest of colors
         return_path = os.path.join(colors_path, 'BLUE.png')
     elif color == 'GRAY':
         return_path = os.path.join(colors_path, 'GRAY.png')
+    elif color == 'ORANGE':
+        return_path = os.path.join(colors_path, 'ORANGE.png')
+    elif color == 'YELLOW':
+        return_path = os.path.join(colors_path, 'YELLOW.png')
     elif color in ['DEFAULT', 'WHITE', None, 'None']:
         return_path = os.path.join(colors_path, 'DEFAULT.png')
     else:
