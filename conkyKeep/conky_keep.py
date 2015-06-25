@@ -104,21 +104,22 @@ def format_conky_note(note, vertical_offset=0, conky_width=330):
     
     # compute right goto
     rgoto = conky_width-(background_width-10)
+    rgoto_text = rgoto+10
     
     # add colored background
     print "${image "+colorPath+" -p "+str(rgoto)+","+str(vertical_offset)+" -s "+str(background_width)+"x"+str(background_height)+"}",
     print "${color black}",
     
     # add vertical line
-    print "${image "+os.path.join(colors_path, 'BLACK.png')+" -p "+str(rgoto-5)+","+str(vertical_offset)+" -s "+str(background_width)+"x2}"
+    print "${image "+os.path.join(colors_path, 'BLACK.png')+" -p "+str(rgoto)+","+str(vertical_offset)+" -s "+str(background_width)+"x2}"
     
     # add title + text
     if note['title'].strip() != '':
-        print '${font Monospace:bold:size=12}${goto '+str(rgoto)+'}'+note['title'].strip()+'${font}'
+        print '${font Monospace:bold:size=12}${goto '+str(rgoto_text)+'}'+note['title'].strip()+'${font}'
         
     print '${font Monospace:size=10}',
     for line in note['text'].split('\n'):
-        print '${goto '+str(rgoto)+'}'+line.strip()
+        print '${goto '+str(rgoto_text)+'}'+line.strip()
     
     # reset font + color
     print "${color}${font}",
