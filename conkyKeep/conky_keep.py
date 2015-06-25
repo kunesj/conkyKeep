@@ -12,14 +12,33 @@ except:
 
 from session_google import SessionGoogle
 
-conf_file = 'config.xml'
+# get path to app dir
+path = os.path.dirname(os.path.abspath(__file__))
 
+# get config file path
+# config file in same folde has higher priority
+conf_file = 'config.xml'
+if os.path.isfile(os.path.join(path, conf_file)): # config in same folder as conkyKeep.sh (../)
+    conf_path = os.path.join(path, '..', conf_file) 
+else: # config in ~/.config/conkykeep folder
+    try:
+        import appdirs
+        app_config_dir = appdirs.user_config_dir('conkykeep', 'jirka642')
+    except:
+        app_config_dir = os.path.join(os.path.expanduser("~"), '.config', 'conkykeep')
+
+    conf_path = os.path.join(app_config_dir, conf_file) 
+if not os.path.isfile(conf_path):
+    print "ERROR: config file not found in: "+conf_path
+
+# get app resource paths
 path = os.path.dirname(os.path.abspath(__file__))
 colors_path = os.path.join(path, 'colors')
-conf_path = os.path.join(path, '..', conf_file) 
 
-line_height = 16
-line_height_title = 18
+line_height = 17
+line_width = 8
+line_height_title = 16
+line_width_title = 10
 
 def getColorPath(color):
     """
@@ -59,7 +78,14 @@ def format_conky_note(note, vertical_offset=0):
         background_height += line_height_title
     
     # background color width
-    background_width = 330+10
+    width_title = len(note['title'])*line_width_title
+    maxl = 0
+    for l in note['text'].split('\n'):
+        maxl = max(maxl, len(l))
+    width = maxl*line_width
+    width = max(width, width_title)
+    width = max(width, 330)
+    background_width = width+10
     
     # add colored background
     print "${image "+colorPath+" -p -5,"+str(vertical_offset)+" -s "+str(background_width)+"x"+str(background_height)+"}",
@@ -70,8 +96,8 @@ def format_conky_note(note, vertical_offset=0):
     
     # add title + text
     if note['title'].strip() != '':
-        print '${font Arial:bold:size=12}'+note['title']+'${font}'
-    print '${font Arial:size=10}'+note['text']+'${font}'
+        print '${font Monospace:bold:size=12}'+note['title']+'${font}'
+    print '${font Monospace:size=10}'+note['text']+'${font}'
     
     # reset font + color
     print "${color}${font}",

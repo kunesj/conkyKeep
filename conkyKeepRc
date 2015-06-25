@@ -15,7 +15,7 @@ own_window_colour black
 #own_window_argb_value 255 #130 # adjust the transparancy of BG-Color
 own_window_hints undecorated,skip_pager,skip_taskbar
 use_xft yes
-xftfont DejaVu Sans Mono:size=9
+xftfont DejaVu Sans Monospace:size=9
 xftalpha 0.8 
 out_to_console no
 out_to_stderr no
