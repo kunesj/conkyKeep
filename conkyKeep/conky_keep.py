@@ -66,18 +66,18 @@ def getColorPath(color):
         print "${color black}Unknown color "+str(color)+"${color}",
         
     return return_path
-
-def format_conky_note(note, vertical_offset=0):
-    # get path to background color image
-    colorPath = getColorPath(note['color'])
     
-    # background color height
+def getNoteSize(note):
+    """
+    Get needed resolution for background
+    """
+    # background height
     background_height = len(note['text'].split('\n'))*line_height
     background_height += line_height # hr
     if note['title'].strip() != '':
         background_height += line_height_title
     
-    # background color width
+    # background width
     width_title = len(note['title'])*line_width_title
     maxl = 0
     for l in note['text'].split('\n'):
@@ -85,19 +85,40 @@ def format_conky_note(note, vertical_offset=0):
     width = maxl*line_width
     width = max(width, width_title)
     width = max(width, 330)
+    
+    return background_height, width
+
+def format_conky_note(note, vertical_offset=0, conky_width=330):
+    """
+    note - dict with note info
+    vertical_offset - vartical position of note
+    conky_width - width of conky (max width of shown notes)
+    """
+    # get path to background color image
+    colorPath = getColorPath(note['color'])
+    
+    # background color height
+    height, width = getNoteSize(note)
+    background_height = height
     background_width = width+10
     
+    # compute right goto
+    rgoto = conky_width-background_width
+    
     # add colored background
-    print "${image "+colorPath+" -p -5,"+str(vertical_offset)+" -s "+str(background_width)+"x"+str(background_height)+"}",
+    print "${image "+colorPath+" -p "+str(rgoto-5)+","+str(vertical_offset)+" -s "+str(background_width)+"x"+str(background_height)+"}",
     print "${color black}",
     
     # add vertical line
-    print '${goto 0}${hr 2}'
+    print "${image "+os.path.join(colors_path, 'BLACK.png')+" -p "+str(rgoto-5)+","+str(vertical_offset)+" -s "+str(background_width)+"x2}"
     
     # add title + text
     if note['title'].strip() != '':
-        print '${font Monospace:bold:size=12}'+note['title']+'${font}'
-    print '${font Monospace:size=10}'+note['text']+'${font}'
+        print '${font Monospace:bold:size=12}${goto '+str(rgoto)+'}'+note['title']+'${font}'
+        
+    print '${font Monospace:size=10}',
+    for line in note['text'].split('\n'):
+        print '${goto '+str(rgoto)+'}'+line
     
     # reset font + color
     print "${color}${font}",
@@ -147,7 +168,8 @@ def main():
         config['login']['password'])
     notes = session.googleKeep_getNotes()
     
-    vertical_offset = int(line_height/2)
+    filtered_notes = []
+    max_width = 0
     for note in notes:
         allowed = False        
         if config['filter']['removeall']:
@@ -160,7 +182,13 @@ def main():
                 allowed = True
         
         if allowed:
-            vertical_offset = format_conky_note(note, vertical_offset)
+            filtered_notes.append(note)
+            height, width = getNoteSize(note)
+            max_width = max(max_width, width)
+    
+    vertical_offset = int(line_height/2)
+    for note in filtered_notes:
+        vertical_offset = format_conky_note(note, vertical_offset, max_width)
     
 if __name__ == "__main__":
     main()
