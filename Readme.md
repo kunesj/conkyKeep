@@ -11,7 +11,7 @@ Install dependencies:
     sudo apt-get install python2.7 python-pip conky-all
     sudo pip install requests beautifulsoup
 
-Copy and then rename config_default.xml to ~/.config/conkykeep/config.xml. You can also create copy in the same folder (as conkyKeep.sh) wich has higher priority.
+Copy and then rename config_default.xml to ~/.config/conkykeep/config.xml. You can also create copy in the same folder (as conkyKeep.sh) which has higher priority.
 
     mkdir -p ~/.config/conkykeep/
     cp config_default.xml ~/.config/conkykeep/config.xml
