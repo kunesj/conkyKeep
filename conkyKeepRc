@@ -2,10 +2,10 @@
 # Also set own_window_type to normal if you use Xfce
 update_interval 600.0
 total_run_times 0
-minimum_size 330 1080
+#minimum_size 330 1080
 alignment top_right
-gap_x 5 
-gap_y 30
+gap_x 0
+gap_y 35
 background yes
 own_window yes
 own_window_type desktop
