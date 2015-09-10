@@ -164,10 +164,18 @@ def get_config():
     
 def main():
     config = get_config()    
+    vertical_offset = int(line_height/2)
     
-    session = SessionGoogle(config['login']['username'], \
-        config['login']['password'])
-    notes = session.googleKeep_getNotes()
+    try:
+        session = SessionGoogle(config['login']['username'], \
+            config['login']['password'])
+        notes = session.googleKeep_getNotes()
+    except Exception, e:
+        note = {"color":"RED", "title":"", \
+            "text":"ConkyKeep: Connection to GoogleKeep failed!!!"}
+        height, width = getNoteSize(note)
+        format_conky_note(note, vertical_offset, width)
+        sys.exit(0)
     
     filtered_notes = []
     max_width = 0
@@ -187,7 +195,6 @@ def main():
             height, width = getNoteSize(note)
             max_width = max(max_width, width)
     
-    vertical_offset = int(line_height/2)
     for note in filtered_notes:
         vertical_offset = format_conky_note(note, vertical_offset, max_width)
     
