@@ -165,7 +165,7 @@ def main():
     try:
         session = SessionGoogle(config['login']['username'], \
             config['login']['password'])
-        notes = session.googleKeep_getNotes()
+        notes = session.googleKeep_formatNotes(session.googleKeep_getNotes())
     except Exception, e:
         note = {"color":"RED", "title":"", \
             "text":"ConkyKeep: Connection to GoogleKeep failed!!!"}

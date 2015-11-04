@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import sys
+import copy
 
 import requests
 from BeautifulSoup import BeautifulSoup
@@ -58,7 +59,7 @@ class SessionGoogle:
     def get(self, URL):
         return self.ses.get(URL).text
         
-    def googleKeep_getNotes(self):
+    def googleKeep_getNotes(self, raw=False):
         html = self.get("https://keep.google.com/")
         bs = BeautifulSoup(unicode(html))
         script = bs.body.findAll('script')[1].text
@@ -69,54 +70,113 @@ class SessionGoogle:
         data = ", ".join(data.split(', ')[:-1])
         self.googleKeep_data_raw = eval(data)
         
-        self.googleKeep_data = []
-        notes_info = []
-        for data in self.googleKeep_data_raw:
-            # ignore trashed (removed) notes
-            trashed = data['timestamps']['trashed']
-            if trashed != '1970-01-01T00:00:00.000Z':
-                continue
-            
-            if 'title' in data: # note settings
-                notes_info.append(data)
-            else:
-                # set default not settings values
-                if 'title' not in data:
-                    data['title'] = ''
-                if 'color' not in data:
-                    data['color'] = 'DEFAULT'
-
+        if not raw:
+            self.googleKeep_data = []
+            for data in self.googleKeep_data_raw:
+                # ignore trashed (removed) notes
+                trashed = data['timestamps']['trashed']
+                if trashed != '1970-01-01T00:00:00.000Z':
+                    continue
+                        
                 self.googleKeep_data.append(data)
             
-        for info in notes_info: 
-            for data in self.googleKeep_data:                
-                if data['parentId'] == info['id']:
-                    if 'color' in info:
-                        data['color'] = info['color']
-                    data['title'] = info['title'].strip()
-        
+            # create note tree
+            self.googleKeep_data = self.googleKeep_getNotesTree(self.googleKeep_data)
+        else:
+            self.googleKeep_data = self.googleKeep_data_raw
+            
         return self.googleKeep_data
-        
-    def googleKeep_formatNotes(self, notes=None, short=False):
-        if notes is None:
-            notes = self.googleKeep_data
-        
-        formated_notes = []
-        for note in notes:
-            s = ""
+    
+    def googleKeep_getNotesTree(self, notes):
+        """
+        Autocalled by googleKeep_getNotes
+        """
+        root_notes = []        
+        for cn in notes:
+            # get root notes
+            if cn['parentId'] == 'root':
+                root_notes.append(cn)
+                continue
             
-            if short is True:
-                s = "id: "+str(note['id']) +"\n"+ \
-                    "color: "+str(note['color']) +"\n"+ \
-                    "title: "+str(note['title']) +"\n"+ \
-                    "text: "+str(note['text'])
+            # add child notes to parent notes
+            for pn in notes:
+                if cn['parentId'] == pn['id']:
+                    if 'childNotes' not in pn:
+                        pn['childNotes'] = []
+                    pn['childNotes'].append(cn)
+                            
+        return root_notes
+    
+    def googleKeep_formatNotes(self, notes, child=False):
+        """
+        requires 'childNotes' in note data
+        """
+        # create copy of notes before modifications
+        notes = copy.deepcopy(notes)
+        
+        for rn in notes:
+            # recursivelly format child notes
+            if 'childNotes' in rn:
+                childNotes = self.googleKeep_formatNotes(rn['childNotes'], child=True)
+            # create formated text variable
+            if 'text' not in rn:
+                rn['text'] = ""
+            rn['formatedText'] = rn['text']
+            
+            ## Root type notes
+            if rn['type'] == "NOTE": # if text note (root note type)              
+                # add formated text from child notes
+                for cn in childNotes:
+                    if rn['formatedText'] != "":
+                        rn['formatedText'] += "\n"
+                    rn['formatedText'] += cn['formatedText']
+            
+            elif rn['type'] == "LIST": # if List note (root note type)
+                for cn in childNotes:
+                    if rn['formatedText'] != "":
+                        rn['formatedText'] += "\n"
+                    
+                    if cn['checked']:
+                        rn['formatedText'] += "[*] "
+                    else:
+                        rn['formatedText'] += "[ ] "
+                    rn['formatedText'] += cn['formatedText']
+            
+            ## Child type notes
+            elif rn['type'] == 'LIST_ITEM': # if text note or list item
+                rn['formatedText'] = rn['text']
+                
+            elif rn['type'] == 'BLOB': # if image note
+                rn['formatedText'] = "[BLOB mime='"+rn['blob']['mimetype']+"' url='https://keep.google.com/media/"+rn['blob']["media_id"]+"']"
+                
             else:
-                for key in note:
-                    s += str(key)+": "+str(note[key])+"\n"
-            
-            s = s.strip()
-            formated_notes.append(s)
+                print "Unknown NoteType:"+rn['type']+" not implemented!"
         
+        # remove unneeded values and add missing default values
+        if not child:
+            formated_notes = []
+            for n in notes:
+                _note = {
+                    'text': n['formatedText'],
+                    'color': "DEFAULT",
+                    'title': "",
+                    'type': "NOTE",
+                    'id': 0
+                }
+                
+                if 'color' in n:
+                    _note['color'] = n['color']
+                if 'title' in n:
+                    _note['title'] = n['title']
+                if 'type' in n:
+                    _note['type'] = n['type']
+                if 'id' in n:
+                    _note['id'] = n['id']
+                
+                formated_notes.append(_note)             
+        else:
+            formated_notes = notes
+                
         return formated_notes
 
 if __name__ == "__main__":
@@ -127,8 +187,9 @@ if __name__ == "__main__":
             
     session = SessionGoogle(str(sys.argv[1]), str(sys.argv[2]))
     notes = session.googleKeep_getNotes()
-    f_notes = session.googleKeep_formatNotes(notes, False)
+    notes = session.googleKeep_getNotesTree(notes)
+    f_notes = session.googleKeep_formatNotes(notes)
 
     for note in f_notes:
-        print "------------------------------"
+        print "---------------------------------------------------------------"
         print note
