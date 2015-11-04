@@ -4,11 +4,7 @@
 import os, sys
 import argparse
 
-try:
-    from BeautifulSoup import BeautifulSoup
-except:
-    # windows fix
-    from bs4 import BeautifulSoup 
+from BeautifulSoup import BeautifulSoup
 
 from session_google import SessionGoogle
 

@@ -4,11 +4,7 @@
 import sys
 
 import requests
-try:
-    from BeautifulSoup import BeautifulSoup
-except:
-    # windows fix
-    from bs4 import BeautifulSoup 
+from BeautifulSoup import BeautifulSoup
 
 # for JavaScript variables compatibility
 false = False
