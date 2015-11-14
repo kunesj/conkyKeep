@@ -24,7 +24,7 @@ stop_cp()
 	PID=$(ps -C conky a | grep 'conkyKeep' | grep '\-d' | awk {'print $1'})
 	if [ -z "$PID" ] 
 	then
-		echo "No running ConkyPress instances found"
+		echo "No running ConkyKeep instances found"
 	else	
 		kill -9 $PID
 	fi
