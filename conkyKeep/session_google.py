@@ -7,9 +7,7 @@ import copy
 import requests
 from BeautifulSoup import BeautifulSoup
 
-# for JavaScript variables compatibility
-false = False
-true = True
+import json
 
 class SessionGoogle:
     """
@@ -66,9 +64,21 @@ class SessionGoogle:
         script_loadChunk = script.split(';')[0]
         
         # fill self.googleKeep_data_raw
-        data = script_loadChunk.split('loadChunk(')[1]
-        data = ", ".join(data.split(', ')[:-1])
-        self.googleKeep_data_raw = eval(data)
+        data = script_loadChunk.split("loadChunk(JSON.parse('")[1]
+        data = "'), ".join(data.split("'), ")[:-1])
+        
+        # convert \x?? charcters
+        while data.find('\\x') != -1:
+            index = data.find('\\x')
+            hex_str = data[index:index+4]
+            val = int(data[index+2:index+4], 16)
+            data = data.replace(hex_str, chr(val))
+        
+        # remove redundant \
+        data = data.replace('\\\\','\\')
+        
+        # decode json string
+        self.googleKeep_data_raw = json.loads(data) # encodes string to utf-8 ?
         
         if not raw:
             self.googleKeep_data = []
@@ -77,7 +87,8 @@ class SessionGoogle:
                 trashed = data['timestamps']['trashed']
                 if trashed != '1970-01-01T00:00:00.000Z':
                     continue
-                        
+                
+                data['text'] = data['text'].encode('utf-8')
                 self.googleKeep_data.append(data)
             
             # create note tree
