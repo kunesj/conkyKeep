@@ -1,5 +1,7 @@
 conkyKeep
 =========
+[![Code Climate](https://codeclimate.com/github/kunesj/conkyKeep/badges/gpa.svg)](https://codeclimate.com/github/kunesj/conkyKeep)
+
 Show notes from [Google Keep](https://keep.google.com/) on Linux desktop with conky.
 
 
