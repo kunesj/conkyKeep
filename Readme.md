@@ -10,8 +10,8 @@ Installation
 
 Install dependencies: 
 
-    sudo apt-get install python2.7 python-pip conky-all
-    sudo pip install requests beautifulsoup
+    sudo apt-get install python3 python3-pip conky-all
+    sudo pip3 install requests beautifulsoup4
 
 Copy and then rename config_default.xml to ~/.config/conkykeep/config.xml. You can also create copy in the same folder (as conkyKeep.sh) which has higher priority.
 
