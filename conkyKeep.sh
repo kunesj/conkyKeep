@@ -22,7 +22,7 @@ stop_cp()
 {
 	echo 'stopping'
 	PID=$(ps -C conky a | grep 'conkyKeep' | grep '\-d' | awk {'print $1'})
-	if [ -z "$PID" ] 
+	if [ -z "$PID" ]
 	then
 		echo "No running ConkyKeep instances found"
 	else	

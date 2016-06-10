@@ -1,5 +1,5 @@
-#!/usr/bin/python2
-# coding: utf-8
+#!/usr/bin/env python3
+# encoding: utf-8
 
-from conky_keep import main
+from conkyKeep.conky_keep import main
 main()

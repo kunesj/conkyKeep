@@ -1,11 +1,11 @@
-#!/usr/bin/python2
-# coding: utf-8
+#!/usr/bin/env python3
+# encoding: utf-8
 
 import sys
 import copy
 
 import requests
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
 import json
 
@@ -43,8 +43,8 @@ class SessionGoogle:
 
     def __init__(self, login, pwd, url_login="https://accounts.google.com/ServiceLogin", url_auth="https://accounts.google.com/ServiceLoginAuth"):
         self.ses = requests.session()
-        login_html = unicode(self.ses.get(url_login).text)
-        soup_login = BeautifulSoup(login_html).find('form').findAll('input')
+        login_html = self.ses.get(url_login).text
+        soup_login = BeautifulSoup(login_html, "lxml").find('form').findAll('input')
         dico = {}
         for u in soup_login:
             if u.get('value') is not None:
@@ -59,9 +59,18 @@ class SessionGoogle:
 
     def googleKeep_getNotes(self, raw=False):
         html = self.get("https://keep.google.com/")
-        bs = BeautifulSoup(unicode(html))
-        script = bs.body.findAll('script')[0].text
-        script_loadChunk = script.split(';')[-2]
+        #with open('html_dump', 'w') as f:
+        #    print("saving html to html_dump..."); f.write(html)
+        bs = BeautifulSoup(html, "lxml")
+
+        # find correct script: "<script type="text/javascript">preloadUserInfo(JSON.parse("
+        script = None
+        for s in bs.body.findAll('script', attrs={'type': 'text/javascript'}):
+            if s.text.strip().startswith("preloadUserInfo(JSON.parse("):
+                script = s; continue
+        if script is None:
+            raise Exception("Couldn't find correct <script> tag!")
+        script_loadChunk = script.text.split(';')[-2]
 
         # fill self.googleKeep_data_raw
         data = script_loadChunk.split("loadChunk(JSON.parse('")[1]
@@ -87,8 +96,6 @@ class SessionGoogle:
                 trashed = data['timestamps']['trashed']
                 if trashed != '1970-01-01T00:00:00.000Z':
                     continue
-
-                data['text'] = data['text'].encode('utf-8')
                 self.googleKeep_data.append(data)
 
             # create note tree
@@ -161,7 +168,7 @@ class SessionGoogle:
                 rn['formatedText'] = "[BLOB mime='"+rn['blob']['mimetype']+"' url='https://keep.google.com/media/"+rn['blob']["media_id"]+"']"
 
             else:
-                print "Unknown NoteType:"+rn['type']+" not implemented!"
+                print("Unknown NoteType:%s not implemented!", (rn['type'],))
 
         # remove unneeded values and add missing default values
         if not child:
@@ -191,9 +198,9 @@ class SessionGoogle:
         return formated_notes
 
 if __name__ == "__main__":
-    print "USAGE: python2 session_google.py USERNAME PASSWORD"
+    print("USAGE: python3 session_google.py USERNAME PASSWORD")
     if len(sys.argv)!=3:
-        print "ERROR: Bad number of arguments"
+        print("ERROR: Bad number of arguments")
         sys.exit(2)
 
     session = SessionGoogle(str(sys.argv[1]), str(sys.argv[2]))
@@ -202,5 +209,5 @@ if __name__ == "__main__":
     f_notes = session.googleKeep_formatNotes(notes)
 
     for note in f_notes:
-        print "---------------------------------------------------------------"
-        print note
+        print("---------------------------------------------------------------")
+        print(note)
