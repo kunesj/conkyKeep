@@ -19,7 +19,7 @@ xftfont DejaVu Sans Monospace:size=9
 xftalpha 0.8
 out_to_console no
 out_to_stderr no
-override_utf8_locale no
+override_utf8_locale yes
 double_buffer yes
 draw_shades no
 draw_outline no
