@@ -2,7 +2,6 @@
 # encoding: utf-8
 
 import os, sys
-import argparse
 
 from bs4 import BeautifulSoup
 
@@ -19,7 +18,7 @@ if os.path.isfile(os.path.join(path, conf_file)): # config in same folder as con
 else: # config in ~/.config/conkykeep folder
     try:
         import appdirs
-        app_config_dir = appdirs.user_config_dir('conkykeep', 'jirka642')
+        app_config_dir = appdirs.user_config_dir('conkykeep')
     except:
         app_config_dir = os.path.join(os.path.expanduser("~"), '.config', 'conkykeep')
 
@@ -115,7 +114,8 @@ def format_conky_note(note, vertical_offset=0, conky_width=330):
 
     print("${font Monospace:size=10}", end="")
     for line in note['text'].split('\n'):
-        print("${goto %i}%s" % (rgoto_text, line.strip()))
+        line = line.strip().replace("#","\#").replace("$","$$")
+        print("${goto %i}%s" % (rgoto_text, line))
 
     # reset font + color
     print("${color}${font}", end="")
@@ -166,7 +166,7 @@ def main():
         session = SessionGoogle(config['login']['username'], \
             config['login']['password'])
         notes = session.googleKeep_formatNotes(session.googleKeep_getNotes())
-    except Exception as e:
+    except Exception:
         note = {"color":"RED", "title":"", \
             "text":"ConkyKeep: Connection to GoogleKeep failed!!!"}
         height, width = getNoteSize(note)
