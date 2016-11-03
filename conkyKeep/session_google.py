@@ -61,7 +61,10 @@ class SessionGoogle:
         html = self.get("https://keep.google.com/")
         #with open('html_dump', 'w') as f:
         #    print("saving html to html_dump..."); f.write(html)
-        bs = BeautifulSoup(html, "lxml")
+
+        # get part of html with notes data
+        html_s = html.split("// Google Inc.")
+        bs = BeautifulSoup("<html><body>"+html_s[-1].strip(), "lxml")
 
         # find correct script: "<script type="text/javascript">preloadUserInfo(JSON.parse("
         script = None
@@ -70,11 +73,10 @@ class SessionGoogle:
                 script = s; continue
         if script is None:
             raise Exception("Couldn't find correct <script> tag!")
-        script_loadChunk = script.text.split(';')[-2]
 
         # fill self.googleKeep_data_raw
-        data = script_loadChunk.split("loadChunk(JSON.parse('")[1]
-        data = "'), ".join(data.split("'), ")[:-1])
+        script_loadChunk = script.text.split(";loadChunk(JSON.parse('")[-1]
+        data = "'), ".join(script_loadChunk.split("'), ")[:-1])
 
         # convert \x?? charcters
         while data.find('\\x') != -1:
