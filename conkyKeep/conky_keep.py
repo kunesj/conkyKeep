@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 
-import os, sys
+import os, sys, traceback
 
 from bs4 import BeautifulSoup
 
@@ -167,8 +167,9 @@ def main():
             config['login']['password'])
         notes = session.googleKeep_formatNotes(session.googleKeep_getNotes())
     except Exception:
+        exc = traceback.format_exc()
         note = {"color":"RED", "title":"", \
-            "text":"ConkyKeep: Connection to GoogleKeep failed!!!"}
+            "text":"ConkyKeep: Connection to GoogleKeep failed!!!\n%s" % exc}
         height, width = getNoteSize(note)
         format_conky_note(note, vertical_offset, width)
         sys.exit(0)
