@@ -59,7 +59,7 @@ class SessionGoogle:
 
     def googleKeep_getNotes(self, raw=False):
         html = self.get("https://keep.google.com/")
-        #with open('html_dump', 'w') as f:
+        # with open('html_dump', 'w') as f:
         #    print("saving html to html_dump..."); f.write(html)
 
         # get part of html with notes data

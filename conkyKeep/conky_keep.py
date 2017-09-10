@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 
-import os, sys, traceback
+import os, sys, shutil, traceback
 
 from bs4 import BeautifulSoup
+import PIL
 
 from conkyKeep.session_google import SessionGoogle
+from conkyKeep.note_drawer import NoteDrawer
+
+NOTE_MARGIN = 5
+CONKY_WIDTH = 1000 # None -> will compute minimal value
+ERROR_TRACEBACK = False
 
 # get path to app dir
 path = os.path.dirname(os.path.abspath(__file__))
 
 # get config file path
-# config file in same folde has higher priority
+# config file in same folder has higher priority
 conf_file = 'config.xml'
 if os.path.isfile(os.path.join(path, conf_file)): # config in same folder as conkyKeep.sh (../)
     conf_path = os.path.join(path, '..', conf_file)
@@ -26,102 +32,9 @@ else: # config in ~/.config/conkykeep folder
 if not os.path.isfile(conf_path):
     print("ERROR: config file not found in: %s" % (conf_path,))
 
-# get app resource paths
-path = os.path.dirname(os.path.abspath(__file__))
-colors_path = os.path.join(path, 'colors')
-
-line_height = 17
-line_width = 8
-line_height_title = 16
-line_width_title = 10
-
-def getColorPath(color):
-    """
-    Returns:
-        pathToBackgroundImage
-    """
-    return_path = os.path.join(colors_path, 'DEFAULT.png')
-    if color == 'TEAL':
-        return_path = os.path.join(colors_path, 'TEAL.png')
-    elif color == 'RED':
-        return_path = os.path.join(colors_path, 'RED.png')
-    elif color == 'GREEN':
-        return_path = os.path.join(colors_path, 'GREEN.png')
-    elif color == 'BLUE':
-        return_path = os.path.join(colors_path, 'BLUE.png')
-    elif color == 'GRAY':
-        return_path = os.path.join(colors_path, 'GRAY.png')
-    elif color == 'ORANGE':
-        return_path = os.path.join(colors_path, 'ORANGE.png')
-    elif color == 'YELLOW':
-        return_path = os.path.join(colors_path, 'YELLOW.png')
-    elif color in ['DEFAULT', 'WHITE', None, 'None']:
-        return_path = os.path.join(colors_path, 'DEFAULT.png')
-    else:
-        print("${color black}Unknown color %s${color}" % (str(color),), end="")
-
-    return return_path
-
-def getNoteSize(note):
-    """
-    Get needed resolution for background
-    """
-    # background height
-    background_height = len(note['text'].split('\n'))*line_height
-    background_height += line_height # hr
-    if note['title'].strip() != '':
-        background_height += line_height_title
-
-    # background width
-    width_title = len(note['title'])*line_width_title
-    maxl = 0
-    for l in note['text'].split('\n'):
-        maxl = max(maxl, len(l))
-    width = maxl*line_width
-    width = max(width, width_title)
-    width = max(width, 330)
-
-    return background_height, width
-
-def format_conky_note(note, vertical_offset=0, conky_width=330):
-    """
-    note - dict with note info
-    vertical_offset - vartical position of note
-    conky_width - width of conky (max width of shown notes)
-    """
-    # get path to background color image
-    colorPath = getColorPath(note['color'])
-
-    # background color height
-    height, width = getNoteSize(note)
-    background_height = height
-    background_width = width+10
-
-    # compute right goto
-    rgoto = conky_width-(background_width-10)
-    rgoto_text = rgoto+10
-
-    # add colored background
-    print("${image %s -p %i,%i -s %ix%i}" % (colorPath, rgoto, vertical_offset, background_width, background_height), end="")
-    print("${color black}", end="")
-
-    # add vertical line
-    print("${image %s -p %i,%i -s %ix2}" % (os.path.join(colors_path, 'BLACK.png'), rgoto, vertical_offset, background_width))
-
-    # add title + text
-    if note['title'].strip() != '':
-        print("${font Monospace:bold:size=12}${goto %i}%s${font}" % (rgoto_text, note['title'].strip()))
-
-    print("${font Monospace:size=10}", end="")
-    for line in note['text'].split('\n'):
-        line = line.strip().replace("#","\#").replace("$","$$")
-        print("${goto %i}%s" % (rgoto_text, line))
-
-    # reset font + color
-    print("${color}${font}", end="")
-
-    # return new vertical offset
-    return background_height+vertical_offset-1
+# init cache ~/.cache/conkykeep
+cache_path = os.path.join(os.path.expanduser("~"), '.cache', 'conkykeep')
+os.makedirs(cache_path, exist_ok=True)
 
 def get_config():
     bs_conf = BeautifulSoup(open(conf_path, "r"), "lxml").configuration
@@ -156,44 +69,108 @@ def get_config():
 
     conf['filter'] = filter_conf
 
+    # style
+    # TODO
+
+    # misc
+    # TODO
+
     return conf
+
+def display_note(img_path, vertical_offset, conky_width):
+    im = PIL.Image.open(img_path)
+    w,h = im.size
+    print("${image %s -p %i,%i -s %ix%i}" % (img_path, conky_width-w, vertical_offset, w, h), end="")
+    return vertical_offset+h+NOTE_MARGIN
 
 def main():
     config = get_config()
-    vertical_offset = int(line_height/2)
+    nd = NoteDrawer()
+    warn_note = None
 
+    # remove warn.png from cache
+    warn_path = os.path.join(cache_path, "warn.png")
+    if os.path.exists(warn_path): os.remove(warn_path)
+
+    # download notes from google
     try:
         session = SessionGoogle(config['login']['username'], \
             config['login']['password'])
         notes = session.googleKeep_formatNotes(session.googleKeep_getNotes())
     except Exception:
         exc = traceback.format_exc()
-        note = {"color":"RED", "title":"", \
-            "text":"ConkyKeep: Connection to GoogleKeep failed!!!\n%s" % exc}
-        height, width = getNoteSize(note)
-        format_conky_note(note, vertical_offset, width)
-        sys.exit(0)
+        warn_note = {"color":"RED", "title":"!!!ERROR!!!", \
+            "text":"ConkyKeep: Connection to GoogleKeep failed!!!"}
+        if ERROR_TRACEBACK:
+            warn_note["text"] += "\n%s" % exc
+        # convert to warn.png
+        warn_img = nd.drawNoteDict(warn_note)
+        warn_img.save(warn_path)
 
-    filtered_notes = []
-    max_width = 0
-    for note in notes:
-        allowed = False
-        if config['filter']['removeall']:
-            if (note['id'] in config['filter']['ids']) or \
-            (note['title'].lower() in config['filter']['titles']):
-                allowed = True
+
+    if warn_note is None:
+        try:
+            # filter notes
+            filtered_notes = []
+            for note in notes:
+                allowed = False
+                if config['filter']['removeall']:
+                    if (note['id'] in config['filter']['ids']) or \
+                    (note['title'].lower() in config['filter']['titles']):
+                        allowed = True
+                else:
+                    if (note['id'] not in config['filter']['ids']) and \
+                        (note['title'].lower() not in config['filter']['titles']):
+                        allowed = True
+
+                if allowed:
+                    filtered_notes.append(note)
+
+            # clear cache # TODO - reuse unchanged images from last run
+            shutil.rmtree(cache_path)
+            os.makedirs(cache_path, exist_ok=True)
+
+            # convert notes to images (generate note img files 0.png, 1.png, ...)
+            for i, note in enumerate(filtered_notes):
+                note_img = nd.drawNoteDict(note)
+                note_path = os.path.join(cache_path, "%s.png" % i)
+                note_img.save(note_path)
+
+
+        except Exception:
+            exc = traceback.format_exc()
+            warn_note = {"color":"RED", "title":"!!!ERROR!!!", \
+                "text":"ConkyKeep: Something failed!!!"}
+            if ERROR_TRACEBACK:
+                warn_note["text"] += "\n%s" % exc
+            # convert to warn.png
+            warn_img = nd.drawNoteDict(warn_note)
+            warn_img.save(warn_path)
+
+    # compute conky width
+    if CONKY_WIDTH is None:
+        conky_width = 0
+        for item in os.listdir(cache_path):
+            if not item.lower().endswith(".png"): continue
+            img_path = os.path.join(cache_path, item)
+            im = PIL.Image.open(img_path)
+            w,h = im.size
+            conky_width = max(conky_width, w)
+    else:
+        conky_width = CONKY_WIDTH
+
+    # display note images (display warning first)
+    vertical_offset = 0
+    if os.path.exists(warn_path):
+        vertical_offset = display_note(warn_path, vertical_offset, conky_width)
+    i = 0;
+    while True:
+        note_path = os.path.join(cache_path, "%s.png" % i)
+        if os.path.exists(note_path):
+            vertical_offset = display_note(note_path, vertical_offset, conky_width)
         else:
-            if (note['id'] not in config['filter']['ids']) and \
-                (note['title'].lower() not in config['filter']['titles']):
-                allowed = True
-
-        if allowed:
-            filtered_notes.append(note)
-            height, width = getNoteSize(note)
-            max_width = max(max_width, width)
-
-    for note in filtered_notes:
-        vertical_offset = format_conky_note(note, vertical_offset, max_width)
+            break
+        i = i+1
 
 if __name__ == "__main__":
     main()
