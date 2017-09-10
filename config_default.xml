@@ -23,6 +23,9 @@
         <removeall>no</removeall>
         <removetitle>Passwords</removetitle>
 	</filter>
+
+    <!-- Everything under this is currently not finished (it's hardcoded) -->
+
     <!-- Style -->
     <style>
         <note>
