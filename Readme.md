@@ -11,14 +11,16 @@ Installation
 Install dependencies: 
 
     sudo apt-get install python3 python3-pip conky-all
-    sudo pip3 install requests beautifulsoup4
+    sudo pip3 install requests beautifulsoup4 configparser
 
-Copy and then rename config_default.xml to ~/.config/conkykeep/config.xml. You can also create copy in the same folder (as conkyKeep.sh) which has higher priority.
+Copy and then rename config_user.cfg to ~/.config/conkykeep/config.cfg. You can also create copy in the same folder (as conkyKeep.sh) which has higher priority.
 
     mkdir -p ~/.config/conkykeep/
-    cp config_default.xml ~/.config/conkykeep/config.xml
+    cp config_user.cfg ~/.config/conkykeep/config.cfg
     
-Set correct Google login information inside copied config.xml.
+Set correct Google login information inside copied config.cfg.
+
+For information about settings for note styling, filtering and more, look inside file config_default.cfg.
 
 
 Usage

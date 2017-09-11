@@ -35,5 +35,4 @@ conky.config = {
     }
 
 conky.text = [[ ${execpi 600 python3 -m conkyKeep } ]]
--- conky.text = [[${image /home/jirka642/.cache/conkykeep/0.png -p 129,0 -s 394x520}${image /home/jirka642/.cache/conkykeep/1.png -p 0,520 -s 523x98}]]
 

@@ -1,24 +1,19 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 
-import os, sys, shutil, traceback
-
-from bs4 import BeautifulSoup
+import os, shutil, traceback
 import PIL
 
-from conkyKeep.session_google import SessionGoogle
-from conkyKeep.note_drawer import NoteDrawer
-
-NOTE_MARGIN = 5
-CONKY_WIDTH = 1000 # None -> will compute minimal value
-ERROR_TRACEBACK = False
+from .session_google import SessionGoogle
+from .note_drawer import NoteDrawer
+from .config_manager import CONFIG_MANAGER
 
 # get path to app dir
 path = os.path.dirname(os.path.abspath(__file__))
 
 # get config file path
 # config file in same folder has higher priority
-conf_file = 'config.xml'
+conf_file = 'config.cfg'
 if os.path.isfile(os.path.join(path, conf_file)): # config in same folder as conkyKeep.sh (../)
     conf_path = os.path.join(path, '..', conf_file)
 else: # config in ~/.config/conkykeep folder
@@ -36,72 +31,43 @@ if not os.path.isfile(conf_path):
 cache_path = os.path.join(os.path.expanduser("~"), '.cache', 'conkykeep')
 os.makedirs(cache_path, exist_ok=True)
 
-def get_config():
-    bs_conf = BeautifulSoup(open(conf_path, "r"), "lxml").configuration
-    conf = {}
-
-    # login info
-    login_conf = {'username': bs_conf.login.username.text.strip(), \
-        'password': bs_conf.login.password.text.strip()}
-    conf['login'] = login_conf
-
-    # filter
-    filter_conf = {'ids':[], 'titles':[], 'removeall':False}
-
-    filt = bs_conf.find('filter')
-    if filt.find('removeall') is not None:
-        if 'yes' == filt.find('removeall').text.lower().strip():
-            filter_conf['removeall'] = True
-        else:
-            filter_conf['removeall'] = False
-
-    if filter_conf['removeall']:
-        ids = filt.findAll('allowid')
-        titles = filt.findAll('allowtitle')
-    else:
-        ids = filt.findAll('removeid')
-        titles = filt.findAll('removetitle')
-
-    for a in ids:
-        filter_conf['ids'].append(a.text.lower().strip())
-    for a in titles:
-        filter_conf['titles'].append(a.text.lower().strip())
-
-    conf['filter'] = filter_conf
-
-    # style
-    # TODO
-
-    # misc
-    # TODO
-
-    return conf
-
 def display_note(img_path, vertical_offset, conky_width):
     im = PIL.Image.open(img_path)
     w,h = im.size
     print("${image %s -p %i,%i -s %ix%i}" % (img_path, conky_width-w, vertical_offset, w, h), end="")
-    return vertical_offset+h+NOTE_MARGIN
+    return vertical_offset+h+CONFIG_MANAGER.getInt("Style", "NoteMargin")
 
 def main():
-    config = get_config()
-    nd = NoteDrawer()
-    warn_note = None
+    CONFIG_MANAGER.loadConfig(conf_path)
+    nd = NoteDrawer(
+        note_max_size = tuple(CONFIG_MANAGER.getListInt("Style", "NoteMaxSize")),
+        note_padding = CONFIG_MANAGER.getInt("Style", "NotePadding"),
+        note_title_margin = CONFIG_MANAGER.getInt("Style", "NoteTitleMargin"),
 
-    # remove warn.png from cache
+        font_name = CONFIG_MANAGER.get("Style", "FontName"),
+        font_size = CONFIG_MANAGER.getInt("Style", "FontSize"),
+        font_color = tuple(CONFIG_MANAGER.getListInt("Style", "FontColor")),
+
+        font_title_name = CONFIG_MANAGER.get("Style", "FontTitleName"),
+        font_title_size = CONFIG_MANAGER.getInt("Style", "FontTitleSize"),
+        font_title_color = tuple(CONFIG_MANAGER.getListInt("Style", "FontTitleColor"))
+    )
+
+    # remove old warn.png from cache
     warn_path = os.path.join(cache_path, "warn.png")
     if os.path.exists(warn_path): os.remove(warn_path)
+    warn_note = None
 
     # download notes from google
     try:
-        session = SessionGoogle(config['login']['username'], \
-            config['login']['password'])
+        session = SessionGoogle(CONFIG_MANAGER.get("Login","Username"), \
+            CONFIG_MANAGER.get("Login","Password"))
         notes = session.googleKeep_formatNotes(session.googleKeep_getNotes())
     except Exception:
         exc = traceback.format_exc()
         warn_note = {"color":"RED", "title":"!!!ERROR!!!", \
             "text":"ConkyKeep: Connection to GoogleKeep failed!!!"}
-        if ERROR_TRACEBACK:
+        if CONFIG_MANAGER.getBoolean("Misc", "ErrorTraceback"):
             warn_note["text"] += "\n%s" % exc
         # convert to warn.png
         warn_img = nd.drawNoteDict(warn_note)
@@ -114,13 +80,15 @@ def main():
             filtered_notes = []
             for note in notes:
                 allowed = False
-                if config['filter']['removeall']:
-                    if (note['id'] in config['filter']['ids']) or \
-                    (note['title'].lower() in config['filter']['titles']):
+                if CONFIG_MANAGER.getBoolean("Filter", "RemoveAll"):
+                    if (note['id'] in CONFIG_MANAGER.getList("Filter", "AllowIds")) or \
+                    (note['title'].lower() in \
+                        CONFIG_MANAGER.getList("Filter", "AllowTitles", lowercase=True)):
                         allowed = True
                 else:
-                    if (note['id'] not in config['filter']['ids']) and \
-                        (note['title'].lower() not in config['filter']['titles']):
+                    if (note['id'] not in CONFIG_MANAGER.getList("Filter", "RemoveIds")) and \
+                        (note['title'].lower() not in \
+                            CONFIG_MANAGER.getList("Filter", "RemoveTitles", lowercase=True)):
                         allowed = True
 
                 if allowed:
@@ -141,14 +109,15 @@ def main():
             exc = traceback.format_exc()
             warn_note = {"color":"RED", "title":"!!!ERROR!!!", \
                 "text":"ConkyKeep: Something failed!!!"}
-            if ERROR_TRACEBACK:
+            if CONFIG_MANAGER.getBoolean("Misc", "ErrorTraceback"):
                 warn_note["text"] += "\n%s" % exc
             # convert to warn.png
             warn_img = nd.drawNoteDict(warn_note)
             warn_img.save(warn_path)
 
     # compute conky width
-    if CONKY_WIDTH is None:
+    conky_width = CONFIG_MANAGER.getInt("Misc", "ConkyWidth")
+    if conky_width == 0:
         conky_width = 0
         for item in os.listdir(cache_path):
             if not item.lower().endswith(".png"): continue
@@ -156,8 +125,7 @@ def main():
             im = PIL.Image.open(img_path)
             w,h = im.size
             conky_width = max(conky_width, w)
-    else:
-        conky_width = CONKY_WIDTH
+
 
     # display note images (display warning first)
     vertical_offset = 0
