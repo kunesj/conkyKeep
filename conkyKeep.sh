@@ -12,6 +12,7 @@ start_cp()
 	echo 'starting'
 	folderPath=$(dirname $0)
 	cd "$folderPath"
+	python3 -m conkyKeep -c conkyKeepRc # generate conkyKeepRc
 	conky -d -c conkyKeepRc
 }
 

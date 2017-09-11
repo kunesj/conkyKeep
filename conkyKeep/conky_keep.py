@@ -8,39 +8,21 @@ from .session_google import SessionGoogle
 from .note_drawer import NoteDrawer
 from .config_manager import CONFIG_MANAGER
 
-# get path to app dir
-path = os.path.dirname(os.path.abspath(__file__))
-
-# get config file path
-# config file in same folder has higher priority
-conf_file = 'config.cfg'
-if os.path.isfile(os.path.join(path, conf_file)): # config in same folder as conkyKeep.sh (../)
-    conf_path = os.path.join(path, '..', conf_file)
-else: # config in ~/.config/conkykeep folder
-    try:
-        import appdirs
-        app_config_dir = appdirs.user_config_dir('conkykeep')
-    except:
-        app_config_dir = os.path.join(os.path.expanduser("~"), '.config', 'conkykeep')
-
-    conf_path = os.path.join(app_config_dir, conf_file)
-if not os.path.isfile(conf_path):
-    print("ERROR: config file not found in: %s" % (conf_path,))
-
 # init cache ~/.cache/conkykeep
 cache_path = os.path.join(os.path.expanduser("~"), '.cache', 'conkykeep')
 os.makedirs(cache_path, exist_ok=True)
 
-def display_note(img_path, vertical_offset, conky_width):
-    im = PIL.Image.open(img_path)
-    w,h = im.size
-    print("${image %s -p %i,%i -s %ix%i}" % (img_path, conky_width-w, vertical_offset, w, h), end="")
+def display_note(img_path, vertical_offset):
+    im = PIL.Image.open(img_path); w,h = im.size
+    print("${image %s -p %i,%i -s %ix%i}" % (img_path, \
+        CONFIG_MANAGER.getInt("General", "ConkyWidth")-w, vertical_offset, w, h), end="")
     return vertical_offset+h+CONFIG_MANAGER.getInt("Style", "NoteMargin")
 
-def main():
-    CONFIG_MANAGER.loadConfig(conf_path)
+def build_notes():
+    note_max_size = tuple([CONFIG_MANAGER.getInt("General", "ConkyWidth"), \
+        CONFIG_MANAGER.getInt("Style", "NoteMaxHeight")])
     nd = NoteDrawer(
-        note_max_size = tuple(CONFIG_MANAGER.getListInt("Style", "NoteMaxSize")),
+        note_max_size = note_max_size,
         note_padding = CONFIG_MANAGER.getInt("Style", "NotePadding"),
         note_title_margin = CONFIG_MANAGER.getInt("Style", "NoteTitleMargin"),
 
@@ -67,7 +49,7 @@ def main():
         exc = traceback.format_exc()
         warn_note = {"color":"RED", "title":"!!!ERROR!!!", \
             "text":"ConkyKeep: Connection to GoogleKeep failed!!!"}
-        if CONFIG_MANAGER.getBoolean("Misc", "ErrorTraceback"):
+        if CONFIG_MANAGER.getBoolean("General", "ErrorTraceback"):
             warn_note["text"] += "\n%s" % exc
         # convert to warn.png
         warn_img = nd.drawNoteDict(warn_note)
@@ -109,36 +91,24 @@ def main():
             exc = traceback.format_exc()
             warn_note = {"color":"RED", "title":"!!!ERROR!!!", \
                 "text":"ConkyKeep: Something failed!!!"}
-            if CONFIG_MANAGER.getBoolean("Misc", "ErrorTraceback"):
+            if CONFIG_MANAGER.getBoolean("General", "ErrorTraceback"):
                 warn_note["text"] += "\n%s" % exc
             # convert to warn.png
             warn_img = nd.drawNoteDict(warn_note)
             warn_img.save(warn_path)
 
-    # compute conky width
-    conky_width = CONFIG_MANAGER.getInt("Misc", "ConkyWidth")
-    if conky_width == 0:
-        conky_width = 0
-        for item in os.listdir(cache_path):
-            if not item.lower().endswith(".png"): continue
-            img_path = os.path.join(cache_path, item)
-            im = PIL.Image.open(img_path)
-            w,h = im.size
-            conky_width = max(conky_width, w)
-
-
     # display note images (display warning first)
     vertical_offset = 0
     if os.path.exists(warn_path):
-        vertical_offset = display_note(warn_path, vertical_offset, conky_width)
+        vertical_offset = display_note(warn_path, vertical_offset)
     i = 0;
     while True:
         note_path = os.path.join(cache_path, "%s.png" % i)
         if os.path.exists(note_path):
-            vertical_offset = display_note(note_path, vertical_offset, conky_width)
+            vertical_offset = display_note(note_path, vertical_offset)
         else:
             break
         i = i+1
 
 if __name__ == "__main__":
-    main()
+    build_notes()
