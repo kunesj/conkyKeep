@@ -12,11 +12,14 @@ class NoteDrawer(object):
     COLORS[None] = COLORS["DEFAULT"]; COLORS["None"] = COLORS["DEFAULT"]
 
     def __init__(self, note_max_size=(1900,1000), note_padding=10, note_title_margin=10, \
+        note_border=1, note_border_color=(0,0,0), \
         font_name="arial.ttf", font_size=12, font_color=(0,0,0), \
         font_title_name="arialbd.ttf", font_title_size=14, font_title_color=(0,0,0) ):
         self.note_max_size = note_max_size
         self.note_padding = note_padding
         self.note_title_margin = note_title_margin
+        self.note_border = note_border
+        self.note_border_color = note_border_color
 
         self.font_name = font_name
         self.font_size = font_size
@@ -78,6 +81,16 @@ class NoteDrawer(object):
 
     def drawBackground(self, size, color): # TODO - decorated borders
         bg = PIL.Image.new("RGBA", size, self.COLORS[color])
+
+        # draw border
+        if self.note_border >= 1:
+            draw = ImageDraw.Draw(bg)
+            draw.rectangle(((0, 0), (size[0]-1, self.note_border)), fill=self.note_border_color)
+            draw.rectangle(((0, 0), (self.note_border, size[1]-1)), fill=self.note_border_color)
+            draw.rectangle(((size[0]-1, 0), (size[0]-1-self.note_border, size[1]-1)), fill=self.note_border_color)
+            draw.rectangle(((0, size[1]-1), (size[0]-1, size[1]-1-self.note_border)), fill=self.note_border_color)
+            draw = ImageDraw.Draw(bg)
+
         return bg
 
     def drawNote(self, title, text, color):

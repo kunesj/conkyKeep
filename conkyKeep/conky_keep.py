@@ -25,6 +25,8 @@ def build_notes():
         note_max_size = note_max_size,
         note_padding = CONFIG_MANAGER.getInt("Style", "NotePadding"),
         note_title_margin = CONFIG_MANAGER.getInt("Style", "NoteTitleMargin"),
+        note_border = CONFIG_MANAGER.getInt("Style", "NoteBorder"),
+        note_border_color = tuple(CONFIG_MANAGER.getListInt("Style", "NoteBorderColor")) ,
 
         font_name = CONFIG_MANAGER.get("Style", "FontName"),
         font_size = CONFIG_MANAGER.getInt("Style", "FontSize"),
