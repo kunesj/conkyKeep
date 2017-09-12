@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 import os, argparse
+import pkg_resources
 
 from .config_manager import CONFIG_MANAGER
 from .conky_keep import build_notes
@@ -10,6 +11,10 @@ from .build_conkyrc import build_conkyrc
 def main():
     # get path to app dir
     path = os.path.dirname(os.path.abspath(__file__))
+
+    # init config
+    default_conf_path = pkg_resources.resource_filename(__name__, "config_default.cfg")
+    CONFIG_MANAGER.loadConfig(default_conf_path)
 
     # get config file path - config file in same folder has higher priority
     conf_file = "config.cfg"

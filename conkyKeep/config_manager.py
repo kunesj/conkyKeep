@@ -1,14 +1,14 @@
 #!/usr/bin/python3
 #coding: utf-8
+# Part of PythonMiscTools
+# https://github.com/kunesj/PythonMiscTools
 
 # how to import:
 # from config_manager import CONFIG_MANAGER
 
-import pkg_resources
 import configparser
 
 class ConfigManager(object):
-    DEFAULT_CFG_PATH = pkg_resources.resource_filename(__name__, "config_default.cfg")
 
     def __init__(self):
         self.config = None
@@ -22,11 +22,6 @@ class ConfigManager(object):
         self.config = configparser.ConfigParser(interpolation=None, inline_comment_prefixes=('#',))
         # make case sensitive
         self.config.optionxform = lambda option: option
-
-        try:
-            self.config.read(self.DEFAULT_CFG_PATH, encoding="utf-8")
-        except Exception:
-            print("Couldn't load default config file '%s'!" % self.DEFAULT_CFG_PATH)
 
     def loadConfig(self, path, update=True):
         if not update:
@@ -82,8 +77,3 @@ class ConfigManager(object):
 
 CONFIG_MANAGER = ConfigManager.getObject()
 
-
-if __name__ == "__main__":
-    print(CONFIG_MANAGER.sections())
-    print(CONFIG_MANAGER.options("Login"))
-    print([CONFIG_MANAGER.getListInt("Style", "FontColor")])
