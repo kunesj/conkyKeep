@@ -7,17 +7,19 @@ from PIL import ImageFont, ImageDraw
 import numpy as np
 import tempfile
 
+COLORS = {"RED":(255,138,128), "GREEN":(204,255,144), "BLUE":(128,216,255), "WHITE":(250,250,250),
+        "ORANGE":(255,209,128), "YELLOW":(255,255,141), "GRAY":(207,216,220), "TEAL":(167,255,235) }
+COLORS["DEFAULT"] = COLORS["WHITE"]
+COLORS[None] = COLORS["DEFAULT"]
+COLORS["None"] = COLORS["DEFAULT"]
+
 class NoteDrawer(object):
-    COLORS = {"RED":"#ff8a80", "GREEN":"#ccff90", "BLUE":"#80d8ff", "WHITE":"#fafafa",
-        "ORANGE":"#ffd180", "YELLOW":"#ffff8d", "GRAY":"#cfd8dc", "TEAL":"#a7ffeb" }
-    COLORS["DEFAULT"] = COLORS["WHITE"]
-    COLORS[None] = COLORS["DEFAULT"]; COLORS["None"] = COLORS["DEFAULT"]
 
     def __init__(self, note_max_size=(1900,1000), note_padding=10, note_title_margin=10, \
         note_border=1, note_border_color=(0,0,0), \
         font_name="arial.ttf", font_size=12, font_color=(0,0,0), \
         font_title_name="arialbd.ttf", font_title_size=14, font_title_color=(0,0,0), \
-        google_session=None ):
+        google_session=None, colors=COLORS):
         self.note_max_size = note_max_size
         self.note_padding = note_padding
         self.note_title_margin = note_title_margin
@@ -35,7 +37,7 @@ class NoteDrawer(object):
         self.font_title_color = font_title_color
 
         self.google_session = google_session
-
+        self.colors = colors
 
     def getNoteSize(self, title, text):
         """ Computes required note size (with padding), and title height (with padding) """
@@ -85,7 +87,7 @@ class NoteDrawer(object):
         return bg
 
     def drawBackground(self, size, color):
-        bg = PIL.Image.new("RGBA", size, self.COLORS[color])
+        bg = PIL.Image.new("RGBA", size, self.colors[color])
 
         # draw border
         if self.note_border >= 1:

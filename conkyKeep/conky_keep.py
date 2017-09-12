@@ -42,6 +42,19 @@ def build_notes():
     # init note drawer
     note_max_size = tuple([CONFIG_MANAGER.getInt("General", "ConkyWidth"), \
         CONFIG_MANAGER.getInt("Style", "NoteMaxHeight")])
+    colors = {
+        "RED":   tuple(CONFIG_MANAGER.getListInt("Style", "ColorRED")),
+        "GREEN": tuple(CONFIG_MANAGER.getListInt("Style", "ColorGREEN")),
+        "BLUE":  tuple(CONFIG_MANAGER.getListInt("Style", "ColorBLUE")),
+        "WHITE": tuple(CONFIG_MANAGER.getListInt("Style", "ColorWHITE")),
+        "ORANGE":tuple(CONFIG_MANAGER.getListInt("Style", "ColorORANGE")),
+        "YELLOW":tuple(CONFIG_MANAGER.getListInt("Style", "ColorYELLOW")),
+        "GRAY":  tuple(CONFIG_MANAGER.getListInt("Style", "ColorGRAY")),
+        "TEAL":  tuple(CONFIG_MANAGER.getListInt("Style", "ColorTEAL"))
+        }
+    colors["DEFAULT"] = colors["WHITE"]
+    colors[None] = colors["DEFAULT"]
+    colors["None"] = colors["DEFAULT"]
     nd = NoteDrawer(
         note_max_size = note_max_size,
         note_padding = CONFIG_MANAGER.getInt("Style", "NotePadding"),
@@ -57,9 +70,9 @@ def build_notes():
         font_title_size = CONFIG_MANAGER.getInt("Style", "FontTitleSize"),
         font_title_color = tuple(CONFIG_MANAGER.getListInt("Style", "FontTitleColor")),
 
-        google_session = session
+        google_session = session,
+        colors = colors
     )
-
 
     # convert google login failure warning to warn.png
     if warn_note is not None:
