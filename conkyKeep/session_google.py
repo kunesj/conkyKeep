@@ -133,6 +133,8 @@ class SessionGoogle:
         """
         # create copy of notes before modifications
         notes = copy.deepcopy(notes)
+         # sort notes (also later sorts children notes in recursive runs)
+        notes = sorted(notes, key=lambda k: int(k['sortValue']), reverse=True)
 
         for rn in notes:
             # recursivelly format child notes
