@@ -107,10 +107,12 @@ class SessionGoogle:
         if not raw:
             self.googleKeep_data = []
             for data in self.googleKeep_data_raw:
-                # ignore trashed (removed) notes
-                trashed = data['timestamps']['trashed']
-                if trashed != '1970-01-01T00:00:00.000Z':
-                    continue
+                if 'trashed' in data['timestamps']:
+                    if data['timestamps']['trashed'] != '1970-01-01T00:00:00.000Z':
+                        continue
+                if 'deleted' in data['timestamps']:
+                    if data['timestamps']['deleted'] != '1970-01-01T00:00:00.000Z':
+                        continue
                 self.googleKeep_data.append(data)
 
             # create note tree
