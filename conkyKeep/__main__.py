@@ -4,7 +4,7 @@
 import os, argparse
 import pkg_resources
 
-from .config_manager import CONFIG_MANAGER
+from .configmanager import CONFIG_MANAGER
 from .conky_keep import build_notes
 from .build_conkyrc import build_conkyrc
 

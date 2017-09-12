@@ -6,7 +6,7 @@ import PIL
 
 from .session_google import SessionGoogle
 from .note_drawer import NoteDrawer
-from .config_manager import CONFIG_MANAGER
+from .configmanager import CONFIG_MANAGER
 
 # init cache ~/.cache/conkykeep
 cache_path = os.path.join(os.path.expanduser("~"), '.cache', 'conkykeep')
