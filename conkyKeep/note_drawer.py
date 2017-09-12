@@ -41,15 +41,21 @@ class NoteDrawer(object):
 
     def getNoteSize(self, title, text):
         """ Computes required note size (with padding), and title height (with padding) """
+        if title.strip() == "" and text.strip() == "":
+            return 1+2*self.note_padding, 1+2*self.note_padding, 0
+
         used_size = (self.note_max_size[0]-2*self.note_padding, self.note_max_size[1]-2*self.note_padding)
 
         # get title_h
-        bg = PIL.Image.new("L", used_size) # grayscale image
-        draw = ImageDraw.Draw(bg)
-        draw.text((0, 0), title, (255,), font=self.font_title)
-        draw = ImageDraw.Draw(bg)
-        bgarr = np.array(bg)
-        title_h = np.max(np.nonzero(np.sum(bgarr, axis=1))) # without padding
+        if title.strip() == "":
+            title_h = 0
+        else:
+            bg = PIL.Image.new("L", used_size) # grayscale image
+            draw = ImageDraw.Draw(bg)
+            draw.text((0, 0), title, (255,), font=self.font_title)
+            draw = ImageDraw.Draw(bg)
+            bgarr = np.array(bg)
+            title_h = np.max(np.nonzero(np.sum(bgarr, axis=1))) # without padding
 
         # get note_w, note_h
         bg = PIL.Image.new("L", used_size)
@@ -77,11 +83,13 @@ class NoteDrawer(object):
         draw = ImageDraw.Draw(bg)
 
         # title
-        draw.text((0+padding, 0+padding), title, font_title_color, font=self.font_title)
-        draw = ImageDraw.Draw(bg)
+        if title.strip() != "":
+            draw.text((0+padding, 0+padding), title, font_title_color, font=self.font_title)
+            draw = ImageDraw.Draw(bg)
+            title_h = title_h+self.note_title_margin
 
         # text
-        draw.text((0+padding, title_h+self.note_title_margin), text, font_color, font=self.font)
+        draw.text((0+padding, title_h), text, font_color, font=self.font)
         draw = ImageDraw.Draw(bg)
 
         return bg
