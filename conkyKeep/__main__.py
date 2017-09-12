@@ -37,7 +37,7 @@ def main():
         CONFIG_MANAGER.loadConfig(conf_path)
 
     # parse commandline args
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='ConkyKeep')
     parser.add_argument('--buildconkyrc', '-c', default=None,
                         help='Builds new conkyrc in on given path and exits')
     parser.add_argument('--buildnotes', '-n', action='store_true',
