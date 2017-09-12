@@ -19,24 +19,6 @@ def display_note(img_path, vertical_offset):
     return vertical_offset+h+CONFIG_MANAGER.getInt("Style", "NoteMargin")
 
 def build_notes():
-    note_max_size = tuple([CONFIG_MANAGER.getInt("General", "ConkyWidth"), \
-        CONFIG_MANAGER.getInt("Style", "NoteMaxHeight")])
-    nd = NoteDrawer(
-        note_max_size = note_max_size,
-        note_padding = CONFIG_MANAGER.getInt("Style", "NotePadding"),
-        note_title_margin = CONFIG_MANAGER.getInt("Style", "NoteTitleMargin"),
-        note_border = CONFIG_MANAGER.getInt("Style", "NoteBorder"),
-        note_border_color = tuple(CONFIG_MANAGER.getListInt("Style", "NoteBorderColor")) ,
-
-        font_name = CONFIG_MANAGER.get("Style", "FontName"),
-        font_size = CONFIG_MANAGER.getInt("Style", "FontSize"),
-        font_color = tuple(CONFIG_MANAGER.getListInt("Style", "FontColor")),
-
-        font_title_name = CONFIG_MANAGER.get("Style", "FontTitleName"),
-        font_title_size = CONFIG_MANAGER.getInt("Style", "FontTitleSize"),
-        font_title_color = tuple(CONFIG_MANAGER.getListInt("Style", "FontTitleColor"))
-    )
-
     # remove old warn.png from cache
     warn_path = os.path.join(cache_path, "warn.png")
     if os.path.exists(warn_path): os.remove(warn_path)
@@ -53,12 +35,38 @@ def build_notes():
             "text":"ConkyKeep: Connection to GoogleKeep failed!!!"}
         if CONFIG_MANAGER.getBoolean("General", "ErrorTraceback"):
             warn_note["text"] += "\n%s" % exc
-        # convert to warn.png
+        # dont have working google session or notes
+        session = None
+        notes = None
+
+    # init note drawer
+    note_max_size = tuple([CONFIG_MANAGER.getInt("General", "ConkyWidth"), \
+        CONFIG_MANAGER.getInt("Style", "NoteMaxHeight")])
+    nd = NoteDrawer(
+        note_max_size = note_max_size,
+        note_padding = CONFIG_MANAGER.getInt("Style", "NotePadding"),
+        note_title_margin = CONFIG_MANAGER.getInt("Style", "NoteTitleMargin"),
+        note_border = CONFIG_MANAGER.getInt("Style", "NoteBorder"),
+        note_border_color = tuple(CONFIG_MANAGER.getListInt("Style", "NoteBorderColor")) ,
+
+        font_name = CONFIG_MANAGER.get("Style", "FontName"),
+        font_size = CONFIG_MANAGER.getInt("Style", "FontSize"),
+        font_color = tuple(CONFIG_MANAGER.getListInt("Style", "FontColor")),
+
+        font_title_name = CONFIG_MANAGER.get("Style", "FontTitleName"),
+        font_title_size = CONFIG_MANAGER.getInt("Style", "FontTitleSize"),
+        font_title_color = tuple(CONFIG_MANAGER.getListInt("Style", "FontTitleColor")),
+
+        google_session = session
+    )
+
+
+    # convert google login failure warning to warn.png
+    if warn_note is not None:
         warn_img = nd.drawNoteDict(warn_note)
         warn_img.save(warn_path)
 
-
-    if warn_note is None:
+    if notes is not None:
         try:
             # filter notes
             filtered_notes = []

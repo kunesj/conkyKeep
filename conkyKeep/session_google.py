@@ -57,6 +57,19 @@ class SessionGoogle:
     def get(self, URL):
         return self.ses.get(URL).text
 
+    def getFile(self, URL):
+        response = self.ses.get(URL)
+        if not response.ok:
+            raise Exception("Failed to download image from google: %s" % URL)
+
+        filename = None
+        for disp in response.headers['Content-Disposition'].split(";"):
+            if disp.startswith("filename="):
+                filename = disp[10:-1]
+                break;
+
+        return filename, response.content
+
     def googleKeep_getNotes(self, raw=False):
         html = self.get("https://keep.google.com/")
         # with open('html_dump', 'w') as f:
@@ -158,10 +171,12 @@ class SessionGoogle:
                     if rn['formatedText'] != "":
                         rn['formatedText'] += "\n"
 
-                    if cn['checked']:
-                        rn['formatedText'] += "[*] "
-                    else:
-                        rn['formatedText'] += "[ ] "
+                    if 'checked' in cn:
+                        if cn['checked']:
+                            rn['formatedText'] += "[*] "
+                        else:
+                            rn['formatedText'] += "[ ] "
+
                     rn['formatedText'] += cn['formatedText']
 
             ## Child type notes

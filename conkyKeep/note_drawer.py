@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 
+import os, shutil
 import PIL
 from PIL import ImageFont, ImageDraw
 import numpy as np
+import tempfile
 
 class NoteDrawer(object):
     COLORS = {"RED":"#ff8a80", "GREEN":"#ccff90", "BLUE":"#80d8ff", "WHITE":"#fafafa",
@@ -14,7 +16,8 @@ class NoteDrawer(object):
     def __init__(self, note_max_size=(1900,1000), note_padding=10, note_title_margin=10, \
         note_border=1, note_border_color=(0,0,0), \
         font_name="arial.ttf", font_size=12, font_color=(0,0,0), \
-        font_title_name="arialbd.ttf", font_title_size=14, font_title_color=(0,0,0) ):
+        font_title_name="arialbd.ttf", font_title_size=14, font_title_color=(0,0,0), \
+        google_session=None ):
         self.note_max_size = note_max_size
         self.note_padding = note_padding
         self.note_title_margin = note_title_margin
@@ -30,6 +33,8 @@ class NoteDrawer(object):
         self.font_title_size = font_title_size
         self.font_title = ImageFont.truetype(self.font_title_name, self.font_title_size)
         self.font_title_color = font_title_color
+
+        self.google_session = google_session
 
 
     def getNoteSize(self, title, text):
@@ -79,7 +84,7 @@ class NoteDrawer(object):
 
         return bg
 
-    def drawBackground(self, size, color): # TODO - decorated borders
+    def drawBackground(self, size, color):
         bg = PIL.Image.new("RGBA", size, self.COLORS[color])
 
         # draw border
@@ -94,10 +99,53 @@ class NoteDrawer(object):
         return bg
 
     def drawNote(self, title, text, color):
-        note_w, note_h, title_h = self.getNoteSize(title, text)
-        bg = self.drawBackground((note_w, note_h), color)
-        note_img = self.drawText(bg, title, title_h, text, padding=self.note_padding, \
-            font_color=self.font_color, font_title_color=self.font_title_color)
+        if "[BLOB mime=" in text: # image note
+            # expecting only at max one image
+            blob_start = text.find("[BLOB mime=", 0)
+            blob_end = text.find("]", blob_start)
+            if blob_start == -1 or blob_end == -1:
+                return self.drawNote("ERROR", "Couldn't find BLOB in detected BLOB note!", "RED")
+            # extract and remove blob from text and get imageless note size
+            blob = text[blob_start:blob_end+1]
+            text = text.replace(blob, "")
+            note_text_w, note_text_h, title_h = self.getNoteSize(title, text)
+            # parse blob url
+            blob_url_start = blob.find("url='", 0)
+            blob_url_end = blob.find("'", blob_url_start+5)
+            blob_url = blob[blob_url_start+5:blob_url_end]
+            # try yo download and read blob
+            try:
+                filename, data = self.google_session.getFile(blob_url)
+                if filename is None or "." not in filename:
+                    raise Exception("Failed getting valid filename!: %s" % filename)
+                ext = filename.strip().split(".")[-1]
+                temp_dir = tempfile.mkdtemp()
+                blob_img_path = os.path.join(temp_dir, "downloaded."+ext)
+                with open(blob_img_path,'wb') as f:
+                    f.write(data)
+                blob_img = PIL.Image.open(blob_img_path)
+                shutil.rmtree(temp_dir)
+            except Exception:
+                blob_img = self.drawNote("ERROR", "Failed downloading or loading blob!\n%s" % blob_url, "RED")
+            # correct required note size, at calculate where to insert image
+            blob_w,blob_h = blob_img.size
+            note_w = max(note_text_w, blob_w+2*self.note_padding)
+            note_h = note_text_h+blob_h+self.note_padding
+            blob_insert_h = note_text_h
+            blob_insert_w = abs(note_w-blob_w)//2
+            # get note without image
+            bg = self.drawBackground((note_w, note_h), color)
+            note_img = self.drawText(bg, title, title_h, text, padding=self.note_padding, \
+                font_color=self.font_color, font_title_color=self.font_title_color)
+            # paste image into note
+            note_img.paste(blob_img, (blob_insert_w, blob_insert_h))
+
+        else: # any other note type
+            note_w, note_h, title_h = self.getNoteSize(title, text)
+            bg = self.drawBackground((note_w, note_h), color)
+            note_img = self.drawText(bg, title, title_h, text, padding=self.note_padding, \
+                font_color=self.font_color, font_title_color=self.font_title_color)
+
         return note_img
 
     def drawNoteDict(self, note):
