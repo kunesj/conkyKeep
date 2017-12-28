@@ -41,7 +41,11 @@ class SessionGoogle:
     googleKeep_data_raw = []
     googleKeep_data = []
 
-    def __init__(self, login, pwd, url_login="https://accounts.google.com/ServiceLogin", url_auth="https://accounts.google.com/ServiceLoginAuth"):
+    def __init__(self, login, pwd, url_login="https://accounts.google.com/ServiceLogin", \
+        url_auth="https://accounts.google.com/ServiceLoginAuth", note_list_hide_checked=False ):
+
+        self.note_list_hide_checked = note_list_hide_checked
+
         self.ses = requests.session()
         login_html = self.ses.get(url_login).text
         soup_login = BeautifulSoup(login_html, "lxml").find('form').findAll('input')
@@ -170,6 +174,10 @@ class SessionGoogle:
 
             elif rn['type'] == "LIST": # if List note (root note type)
                 for cn in childNotes:
+                    if 'checked' in cn:
+                        if cn['checked'] and self.note_list_hide_checked:
+                            continue
+
                     if rn['formatedText'] != "":
                         rn['formatedText'] += "\n"
 

@@ -27,7 +27,7 @@ def build_notes():
     # download notes from google
     try:
         session = SessionGoogle(CONFIG_MANAGER.get("Login","Username"), \
-            CONFIG_MANAGER.get("Login","Password"))
+            CONFIG_MANAGER.get("Login","Password"), note_list_hide_checked=CONFIG_MANAGER.getBoolean("Style", "NoteListHideChecked"))
         notes = session.googleKeep_formatNotes(session.googleKeep_getNotes())
     except Exception:
         exc = traceback.format_exc()
