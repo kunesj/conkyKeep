@@ -152,7 +152,10 @@ class SessionGoogle:
         """
         # create copy of notes before modifications
         notes = copy.deepcopy(notes)
-         # sort notes (also later sorts children notes in recursive runs)
+        # add missing sortValue
+        for n in notes:
+            if 'sortValue' not in n: n['sortValue'] = 0
+        # sort notes (also later sorts children notes in recursive runs)
         notes = sorted(notes, key=lambda k: int(k['sortValue']), reverse=True)
 
         for rn in notes:
@@ -194,8 +197,7 @@ class SessionGoogle:
                 rn['formatedText'] = rn['text']
 
             elif rn['type'] == 'BLOB': # if image note
-                rn['formatedText'] = "[BLOB mime='"+rn['blob']['mimetype']+"' url='https://keep.google.com/media/"+rn['blob']["media_id"]+"']"
-
+                rn['formatedText'] = "[BLOB mime='"+rn['blob']['mimetype']+"' url='https://keep.google.com/media/v2/"+rn['parentServerId']+"/"+rn['serverId']+"']"
             else:
                 print("Unknown NoteType:%s not implemented!", (rn['type'],))
 
