@@ -21,14 +21,14 @@ class GoogleKeepNotes(object):
             # restore dat from cache
             if os.path.exists(cachefile_path):
                 with open(cachefile_path, 'r') as fh:
-                    state = json.load(fh)
-                    self.keep.restore(state)
+                    self.keep.restore(json.load(fh))
             # update data
             self.keep.sync()
             # save updated data to cache
             with open(cachefile_path, 'w') as fh:
-                state = self.keep.dump()
-                json.dump(state, fh)
+                json.dump(self.keep.dump(), fh)
+        else:
+            self.keep.sync()
 
         self.note_list_hide_checked = note_list_hide_checked
 
