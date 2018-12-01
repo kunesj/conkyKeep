@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 
-import os, shutil, traceback
+import os
+import traceback
+from pathlib import Path
 import PIL
 
 from .google_keep_notes import GoogleKeepNotes
@@ -27,10 +29,10 @@ def build_notes():
 
     # download notes from google
     try:
-
         gkn = GoogleKeepNotes(
             CONFIG_MANAGER.get("Login","Username"),
             CONFIG_MANAGER.get("Login","Password"),
+            cache_path=cache_path,
             note_list_hide_checked=CONFIG_MANAGER.getBoolean("Style", "NoteListHideChecked")
         )
         notes = gkn.formatNotes(gkn.getNotes())
@@ -41,7 +43,7 @@ def build_notes():
     except Exception:
         exc = traceback.format_exc()
         warn_note = {"color":"RED", "title":"!!!ERROR!!!", \
-            "text":"ConkyKeep: Connection to GoogleKeep failed!!!"}
+            "text":"ConkyKeep: Connection to GoogleKeep or GoogleSession failed!!!"}
         if CONFIG_MANAGER.getBoolean("General", "ErrorTraceback"):
             warn_note["text"] += "\n%s" % exc
         # dont have working google session or notes
@@ -109,15 +111,14 @@ def build_notes():
                     filtered_notes.append(note)
 
             # clear cache # TODO - reuse unchanged images from last run
-            shutil.rmtree(cache_path)
-            os.makedirs(cache_path, exist_ok=True)
+            for p in Path(cache_path).glob("*.png"):
+                p.unlink()
 
             # convert notes to images (generate note img files 0.png, 1.png, ...)
             for i, note in enumerate(filtered_notes):
                 note_img = nd.drawNoteDict(note)
                 note_path = os.path.join(cache_path, "%s.png" % i)
                 note_img.save(note_path)
-
 
         except Exception:
             exc = traceback.format_exc()
