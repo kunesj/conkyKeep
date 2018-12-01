@@ -12,7 +12,7 @@ Installation
 Install dependencies:
 
     sudo apt-get install python3 python3-pip python3-pil python3-numpy conky-all
-    sudo pip3 install requests beautifulsoup4 configparser
+    sudo pip3 install gkeepapi==0.11.2 configparser
 
 Copy and then rename config_user.cfg to ~/.config/conkykeep/config.cfg. You can also create copy in the same folder (as conkyKeep.sh) which has higher priority.
 

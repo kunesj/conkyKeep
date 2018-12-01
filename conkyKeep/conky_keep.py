@@ -4,6 +4,7 @@
 import os, shutil, traceback
 import PIL
 
+from .google_keep_notes import GoogleKeepNotes
 from .session_google import SessionGoogle
 from .note_drawer import NoteDrawer
 from .configmanager import CONFIG_MANAGER
@@ -26,9 +27,17 @@ def build_notes():
 
     # download notes from google
     try:
-        session = SessionGoogle(CONFIG_MANAGER.get("Login","Username"), \
-            CONFIG_MANAGER.get("Login","Password"), note_list_hide_checked=CONFIG_MANAGER.getBoolean("Style", "NoteListHideChecked"))
-        notes = session.googleKeep_formatNotes(session.googleKeep_getNotes())
+
+        gkn = GoogleKeepNotes(
+            CONFIG_MANAGER.get("Login","Username"),
+            CONFIG_MANAGER.get("Login","Password"),
+            note_list_hide_checked=CONFIG_MANAGER.getBoolean("Style", "NoteListHideChecked")
+        )
+        notes = gkn.formatNotes(gkn.getNotes())
+        session = SessionGoogle(
+            CONFIG_MANAGER.get("Login","Username"),
+            CONFIG_MANAGER.get("Login","Password")
+        )
     except Exception:
         exc = traceback.format_exc()
         warn_note = {"color":"RED", "title":"!!!ERROR!!!", \
