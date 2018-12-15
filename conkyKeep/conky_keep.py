@@ -33,7 +33,8 @@ def build_notes():
             CONFIG_MANAGER.get("Login","Username"),
             CONFIG_MANAGER.get("Login","Password"),
             cache_path=cache_path,
-            note_list_hide_checked=CONFIG_MANAGER.getBoolean("Style", "NoteListHideChecked")
+            note_list_hide_checked=CONFIG_MANAGER.getBoolean("Style", "NoteListHideChecked"),
+            parser=CONFIG_MANAGER.get("General","Parser"),
         )
         notes = gkn.formatNotes(gkn.getNotes())
         session = SessionGoogle(

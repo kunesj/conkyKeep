@@ -4,36 +4,28 @@
 import sys
 import os
 import copy
-import json
-import gkeepapi
+
+from .google_keep_parsers import ParserGkeepapi, ParserSoup
 
 
 class GoogleKeepNotes(object):
 
     NOTES_CACHEFILE = 'notes.cache'
 
-    def __init__(self, login, pwd, cache_path=None, note_list_hide_checked=False):
-        self.keep = gkeepapi.Keep()
-        self.keep.login(login, pwd)
+    def __init__(self, login, pwd, cache_path=None, note_list_hide_checked=False, parser='soup'):
+        assert parser in ['soup', 'gkeepapi']
 
-        if cache_path is not None:
-            cachefile_path = os.path.join(cache_path, self.NOTES_CACHEFILE)
-            # restore dat from cache
-            if os.path.exists(cachefile_path):
-                with open(cachefile_path, 'r') as fh:
-                    self.keep.restore(json.load(fh))
-            # update data
-            self.keep.sync()
-            # save updated data to cache
-            with open(cachefile_path, 'w') as fh:
-                json.dump(self.keep.dump(), fh)
+        if parser.lower() == 'soup':
+            self.parser = ParserSoup(login, pwd, cache_path=cache_path)
+        elif parser.lower() == 'gkeepapi':
+            self.parser = ParserGkeepapi(login, pwd, cache_path=cache_path)
         else:
-            self.keep.sync()
+            raise Exception('Invalid parser "{}"!'.format(parser))
 
         self.note_list_hide_checked = note_list_hide_checked
 
     def getNotes(self, raw=False):
-        notes = self.keep.dump()['nodes']
+        notes = self.parser.getNotes()
         if not raw:
             # filter out deleted and trashed notes
             tmp = []
