@@ -24,7 +24,7 @@ class SessionGoogle:
         # override the inputs with out login and pwd:
         dico['Email'] = login
         dico['Passwd'] = pwd
-        self.ses.post(self.URL_AUTH, data=dico)
+        resp = self.ses.post(self.URL_AUTH, data=dico)
 
     def get(self, URL):
         return self.ses.get(URL).text

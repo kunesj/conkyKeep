@@ -28,7 +28,12 @@ class ParserGkeepapi(object):
                 with open(cachefile_path, 'r') as fh:
                     self.keep.restore(json.load(fh))
             # update data
-            self.keep.sync()
+            try:
+                self.keep.sync()
+            except gkeepapi.exception.ResyncRequiredException:
+                self.keep = gkeepapi.Keep()
+                self.keep.login(login, pwd)
+                self.keep.sync()
             # save updated data to cache
             with open(cachefile_path, 'w') as fh:
                 json.dump(self.keep.dump(), fh)

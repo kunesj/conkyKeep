@@ -152,7 +152,7 @@ if __name__ == "__main__":
     cache_path = os.path.join(os.path.expanduser("~"), '.cache', 'conkykeep')
     os.makedirs(cache_path, exist_ok=True)
 
-    gkn = GoogleKeepNotes(str(sys.argv[1]), str(sys.argv[2]), cache_path=cache_path)
+    gkn = GoogleKeepNotes(str(sys.argv[1]), str(sys.argv[2]), cache_path=cache_path, parser='gkeepapi')
     notes = gkn.getNotes()
     f_notes = gkn.formatNotes(notes)
 
