@@ -44,7 +44,7 @@ def build_conkyrc(path):
         "    minimum_height = %i,\n" % CONFIG_MANAGER.getInt("General", "ConkyHeight") +\
         "    minimum_width = %i,\n" % CONFIG_MANAGER.getInt("General", "ConkyWidth") +\
         CONKYRC_BOTTOM +\
-        "conky.text = [[ ${execpi %i python3 -m conkyKeep -n } ]]" % CONFIG_MANAGER.getInt("General", "ConkyKeepUpdate") +\
+        "conky.text = [[ ${execpi %i python3.9 -m conkyKeep -n } ]]" % CONFIG_MANAGER.getInt("General", "ConkyKeepUpdate") +\
         "\n"
     with open(path, 'w') as f:
         f.write(rc)

@@ -11,15 +11,16 @@ Installation
 
 Install dependencies:
 
-    sudo apt-get install python3 python3-pip python3-pil python3-numpy conky-all
-    sudo pip3 install gkeepapi configparser
+    sudo apt-get install python3.9 python3-pip conky-all
+    sudo python3.9 -m pip install --upgrade setuptools pip distlib
+    sudo python3.9 -m pip install --upgrade gkeepapi configparser pycryptodomex Pillow numpy bs4 lxml
 
 Copy and then rename config_user.cfg to ~/.config/conkykeep/config.cfg. You can also create copy in the same folder (as conkyKeep.sh) which has higher priority.
 
     mkdir -p ~/.config/conkykeep/
     cp config_user.cfg ~/.config/conkykeep/config.cfg
 
-Set correct Google login information inside copied config.cfg.
+Set correct Google login information inside copied config.cfg. You must use "App Password".
 
 For more information about settings, note styling, filtering and more, look inside file config_default.cfg.
 

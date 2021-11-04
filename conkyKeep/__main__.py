@@ -1,20 +1,21 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.9
 # encoding: utf-8
 
 import os, argparse
-import pkg_resources
+import importlib.resources
 
 from .configmanager import CONFIG_MANAGER
 from .conky_keep import build_notes
 from .build_conkyrc import build_conkyrc
+
 
 def main():
     # get path to app dir
     path = os.path.dirname(os.path.abspath(__file__))
 
     # init config
-    default_conf_path = pkg_resources.resource_filename(__name__, "config_default.cfg")
-    CONFIG_MANAGER.loadConfig(default_conf_path)
+    with importlib.resources.path(__package__, "config_default.cfg") as default_conf_path:
+        CONFIG_MANAGER.loadConfig(default_conf_path)
 
     # get config file path - config file in same folder has higher priority
     conf_file = "config.cfg"
@@ -50,5 +51,5 @@ def main():
     elif args.buildnotes:
         build_notes()
 
-main()
 
+main()

@@ -2,8 +2,6 @@
 #
 # Run this script to start or stop conkyKeep
 
-
-
 #
 # start conkyKeep
 #
@@ -12,7 +10,7 @@ start_cp()
 	echo 'starting'
 	folderPath=$(dirname $0)
 	cd "$folderPath"
-	python3 -m conkyKeep -c conkyKeepRc # generate conkyKeepRc
+	python3.9 -m conkyKeep -c conkyKeepRc # generate conkyKeepRc
 	conky -d -c conkyKeepRc
 }
 
